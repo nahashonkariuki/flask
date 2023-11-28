@@ -4,8 +4,10 @@ import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.applications import VGG16
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Load your trained model
 model = load_model('defects_model1.h5')  # Update with your model path
