@@ -13,6 +13,8 @@ CORS(app)
 model_url='https://drive.google.com/uc?id=1X6ojdm6dzwiNRi1n5EbGjwaQwKTM9Etc'
 model_path='magnetic_tile_defect_model.h5'
 response = requests.get(model_url)
+
+
 with open(model_path, 'wb') as f:
     f.write(response.content)
 model = load_model(model_path)
