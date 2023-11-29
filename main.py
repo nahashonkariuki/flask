@@ -1,26 +1,38 @@
 from flask import Flask, render_template, request, jsonify
 import os
-import cv2
+import requests
+from PIL import Image
 import numpy as np
 from tensorflow.keras.models import load_model
-from tensorflow.keras.applications import VGG16
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-model = load_model('defects_model1.h5')  # Update with your model path
+# model = load_model('defects_model1.h5')  # Update with your model path
+model_url='https://drive.google.com/uc?id=1X6ojdm6dzwiNRi1n5EbGjwaQwKTM9Etc'
+model_path='model.h5'
+response = requests.get(model_url)
+with open(model_path, 'wb') as f:
+    f.write(response.content)
+model = load_model(model_path)
 
 def preprocess_image(image_path, label):
-    image = cv2.imread(image_path)
-    image = cv2.resize(image, (224, 224))  # Resize to the desired size
+    image = Image.open(image_path)  # Use Pillow to open the image
+    image = image.resize((299, 299))  # Resize to the desired size
+
+    # Convert the grayscale image to RGB
+    if image.mode == "L":
+        image = image.convert("RGB")
+
     # Preprocess the image for VGG16
-    image = image.astype(np.float32)
-    image = image[..., ::-1]  # BGR to RGB
-    image[..., 0] -= 103.939
-    image[..., 1] -= 116.779
-    image[..., 2] -= 123.68
-    return image, label
+    image_array = np.array(image)
+    image_array = image_array.astype(np.float32)
+    image_array[:, :, 0] -= 103.939
+    image_array[:, :, 1] -= 116.779
+    image_array[:, :, 2] -= 123.68
+
+    return image_array, label
 
 @app.route('/')
 def home():
@@ -44,26 +56,17 @@ def upload_file():
     file.save(file_path)
     print(file_path)
 
-    # Preprocess the uploaded image
-    input_image, _ = preprocess_image(file_path, None)
-
-# Feature extraction using VGG16 model
-    vgg16_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-    input_features = vgg16_model.predict(np.expand_dims(input_image, axis=0))
-
-# Flatten the features
-    input_features_flat = input_features.reshape((input_features.shape[0], -1))
-
-# Make a prediction
-    prediction = model.predict(input_features_flat)
+    image, _ = preprocess_image(file_path, label=None)
+    image = np.expand_dims(image, axis=0)
+    prediction = model.predict(image)
 
 
     # Return the prediction as JSON
     modi_prediction=float(prediction[0][0])
     if modi_prediction>0.5:
-        return jsonify({'result':'Non-Defective'})
-    else:
         return jsonify({'result':'Defective'})
+    else:
+        return jsonify({'result':'Non-Defective'})
     
 
 if __name__ == '__main__':
