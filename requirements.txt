@@ -9,3 +9,4 @@ Tensorflow==2.13.0
 Flask-Cors==4.0.0
 Pillow==10.1.0
 opencv-python==4.8.1.78
+libgl1-mesa-glx
