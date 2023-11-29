@@ -9,7 +9,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# Load your trained model
 model = load_model('defects_model1.h5')  # Update with your model path
 
 def preprocess_image(image_path, label):
@@ -58,9 +57,6 @@ def upload_file():
 # Make a prediction
     prediction = model.predict(input_features_flat)
 
-    # # Make a prediction
-    # print("input_data",input_data)
-    # prediction = model.predict(input_data)
 
     # Return the prediction as JSON
     modi_prediction=float(prediction[0][0])
